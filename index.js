@@ -2,17 +2,20 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 require("dotenv").config();
+
+//Importing schemas
+const Book = require('./schema/book');
+const Author =require('./schema/author');
+const Publication = require('./schema/publication');
+
+
 //database
 const Database = require("./database");
+const BookModel = require("./schema/book");
 
  mongoose
    .connect(process.env.MONGO_URI,
-       {
-          useNewUrlParser : true,
-          useUnifiedTopology : true,
-          useFindAndModify : false,
-          useCreateIndex : true,
-       })
+       )
     .then(() => console.log("connection established!"))
     .catch((err) => {
       console.log(err);
@@ -36,8 +39,9 @@ OurApp.get("/", (request,response) =>{
 //params   -none
 //body     -none
 
-OurApp.get("/book", (req, res) => {
-  return res.json({books: Database.Book});
+OurApp.get("/book", async (req, res) => {
+  const getAllBooks = await Book.find();
+  return res.json(getAllBooks);
 });
 
 //Route    -/book/:bookID
@@ -47,11 +51,14 @@ OurApp.get("/book", (req, res) => {
 //params   -bookID
 //body     -none
 
-OurApp.get("/book/:bookID",(req,res) =>{
-  const getBook = Database.Book.filter(
-    (book) => book.ISBN === req.params.bookID
-    );
-    return res.json({book: getBook});
+OurApp.get("/book/:bookID",async (req,res) =>{
+  const getSpecificBook = await Book.findOne({ISBN:req.params.bookID})
+  if(!getSpecificBook){
+    return res.json({
+      error: 'No book found for the ISBN of ${req.params.bookID',
+    });
+  }
+    return res.json({book: getSpecificBook});
 });
 
 //Route    -/book/c/:category
@@ -117,9 +124,14 @@ OurApp.get("/author/:id",(req,res) =>{
 //Access     PUBLIC
 //Params     None 
 //Method     POST
-OurApp.post("/book/new", (req,res) =>{
-  console.log(req.body);
-  return res.json({message: "Book added Successfully"});
+OurApp.post("/book/new", async (req,res) =>{
+  try{
+    const{newBook} = req.body;
+    await Book.create(newBook);
+    return res.json ({message: 'Book added to database'});
+  }catch(error){
+    return res.json({error : error.message})
+  }  
 });
 
 //Route      /author/new
