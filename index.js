@@ -1,7 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
-require("dotenv").config();
+
 
 //Importing schemas
 const Book = require('./schema/book');
